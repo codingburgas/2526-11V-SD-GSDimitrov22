@@ -9,7 +9,10 @@
 <div class="card mb-3">
     <div class="card-body">
         <h4>@Model.StartLocation → @Model.EndLocation</h4>
-        <p>Date: @Model.Date.ToShortDateString()</p>
+
+        <!-- FIXED: Date is now a string -->
+        <p>Date: @Model.Date</p>
+
         <p>Time: @Model.Time</p>
         <p>Driver: @Model.Driver.FullName</p>
         <p>Remaining Seats: @ViewBag.RemainingSeats</p>

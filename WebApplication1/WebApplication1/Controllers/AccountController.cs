@@ -1,73 +1,50 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using CarpoolingApp.Data;
 using CarpoolingApp.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
-namespace CarpoolingApp.Controllers
+var builder = WebApplication.CreateBuilder(args);
+
+// 🔧 FIX BULGARIAN DATE PARSING
+var cultureInfo = new CultureInfo("en-US");
+cultureInfo.DateTimeFormat.ShortDatePattern = "yyyy-MM-dd";
+cultureInfo.DateTimeFormat.DateSeparator = "-";
+
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+// Configure database connection
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure identity (users and roles)
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Default MVC route
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Trip}/{action=Index}/{id?}");
+
+using (var scope = app.Services.CreateScope())
 {
-    public class AccountController : Controller
-    {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        public AccountController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
+    if (!await roleManager.RoleExistsAsync("User"))
+        await roleManager.CreateAsync(new IdentityRole("User"));
 
-        // Shows registration form
-        public IActionResult Register() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Register(string fullName, string email, string password)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                FullName = fullName
-            };
-
-            var result = await _userManager.CreateAsync(user, password);
-
-            if (result.Succeeded)
-            {
-                // Assign default role and sign in
-                await _userManager.AddToRoleAsync(user, "User");
-                await _signInManager.SignInAsync(user, false);
-
-                return RedirectToAction("Index", "Trip");
-            }
-
-            foreach (var error in result.Errors)
-                ModelState.AddModelError("", error.Description);
-
-            return View();
-        }
-
-        // Shows login form
-        public IActionResult Login() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
-        {
-            var result = await _signInManager.PasswordSignInAsync(
-                email, password, false, false);
-
-            if (result.Succeeded)
-                return RedirectToAction("Index", "Trip");
-
-            ModelState.AddModelError("", "Invalid login.");
-            return View();
-        }
-
-        // Logs out the current user
-        public async Task<IActionResult> Logout()
-        {
-            await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Trip");
-        }
-    }
+    if (!await roleManager.RoleExistsAsync("Admin"))
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
 }
+
+app.Run();

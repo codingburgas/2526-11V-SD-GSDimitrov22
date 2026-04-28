@@ -12,21 +12,23 @@ namespace CarpoolingApp.Models
         [Required]
         public string EndLocation { get; set; } = "";
 
+        // ✅ Proper date type
         [Required]
+        [DataType(DataType.Date)]
         public DateTime Date { get; set; }
 
+        // ✅ Proper time type
         [Required]
+        [DataType(DataType.Time)]
         public TimeSpan Time { get; set; }
 
-        // Total seats offered by the driver
         [Required]
+        [Range(1, 100)]
         public int AvailableSeats { get; set; }
 
-        // Driver of the trip
         public string DriverId { get; set; } = "";
-        public ApplicationUser Driver { get; set; } = null!;
+        public ApplicationUser? Driver { get; set; }
 
-        // Bookings for this trip
         public List<Booking> Bookings { get; set; } = new();
     }
 }

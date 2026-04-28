@@ -46,8 +46,13 @@
                         <tr>
                             <td>@trip.StartLocation</td>
                             <td>@trip.EndLocation</td>
-                            <td>@trip.Date.ToShortDateString()</td>
+
+                            <!-- FIXED: Date is now a string -->
+                            <td>@trip.Date</td>
+
+                            <!-- Time is also a string -->
                             <td>@trip.Time</td>
+
                             <td>@trip.Driver.FullName</td>
                         </tr>
                     }
